@@ -13,7 +13,7 @@ Multiple oligonucleotides can be specified in the same file.  The oligonucleotid
 
 Command invocation:
 
-grepsrch.pl -i <input list of fastq files> -p <oligo data> -o <output file> -n <no complement> -w <working directory>
+grepsrch.pl -i [input list of fastq files] -p [oligo data] -o [output file] -n [no complement] -w [working directory]
 
 The input fastq files can be gzip compressed or not.  The "no complement" option disables use of reverse complement oligo sequences.  The working directory option difines the location of the grepsrch.pl script.  
 
