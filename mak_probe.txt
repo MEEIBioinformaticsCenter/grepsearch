@@ -1,0 +1,1 @@
+mak1	ACCGCGCCCGGCCTCCTTTTTTC	CGAAATGGAGAATCTTTTTTCCT	makmutrefseq.txt	makwtrefseq.txt

@@ -11,11 +11,11 @@ debug=$6
 
 # set this directory to point to zgrepsrch scripts
 if [ -z "$scriptdir" ]; then
-	scriptdir="/data/workdir/archive_process"
+	scriptdir=`dirname $0`
 fi
 if [ -z "$list" ]; then
 	echo "sh $0 <list of files> <search string list> <output filename>"
-	echo "      <workdir> <script dir> <debug(1)>"
+	echo "      <output dir> <script dir> <debug(1)>"
 	exit
 fi
 if [ -z "$workdir" ]; then
@@ -30,6 +30,15 @@ echo "workdir: $workdir"
 echo `pwd`
 log="$output.log"
 
+if [ -n "$debug" ]; then
+	echo "list of files: $list"
+	echo "probes: $probes"
+	echo "output file: $output"
+	echo "output dir: $workdir"
+	echo "script dir: $scriptdir"
+	exit
+fi
+
 for file in `cat $list`
 do
 	if [ -e $file ]; then
@@ -37,9 +46,14 @@ do
 		echo $file >> $output
 		echo $file >> $log
 		if [ ! "$debug" ]; then
-			qsub -V -cwd -b y -e $log -o $log perl $scriptdir/zgrepsrch.pl -i $file -p $probes -o $output  \;
+			perl $scriptdir/zgrepsrch.pl -i $file -p $probes -o $output  \;
+			echo "perl $scriptdir/zgrepsrch.pl -i $file -p $probes -o $output  \;" >> $log
+			# On a ROCKS cluster, use the following command:
+			# qsub -V -cwd -b y -e $log -o $log perl $scriptdir/zgrepsrch.pl -i $file -p $probes -o $output  \;
 		else
-			perl $scriptdir/script.pl $file
+			echo $file
+			perl $scriptdir/zgrepsrch.pl -i $file -p $probes -o $output -d \;
+			perl $scriptdir/zgrepsrch.pl
 		fi
 	fi
 done

@@ -1,0 +1,19 @@
+grepsearch file manifest
+
+
+crb1_probes.txt			CRB1 oligo sequences
+grepsearch.sh			Main grepsearch script
+INSTALL				installation instructions
+IO-CaptureOutput-1.1102.tar.gz	Perl module required by zgrepsrch.pl
+makmutrefseq.fa			MAK1 mutant reference sequence, fasta format
+makmutrefseq.txt		MAK1 mutant reference sequence
+mak_probe.txt			MAK1 oligo sequences
+makwtrefseq.fa			MAK1 wildtype reference sequence, fasta format
+makwtrefseq.txt			MAK1 wildtype reference sequence
+MANIFEST			this file
+README.md			Program description
+testA.gz			test file A
+testB.gz			test file B
+testlist			list of test files
+testresult.txt			expected test file results
+zgrepsrch.pl			Perl script called by grepsearch.sh

@@ -1,0 +1,53 @@
+Installation
+------------
+
+The zgrepsrch.pl script relies on a Perl module called "IO::CaptureOutput".  
+If you get the error message "Can't locate IO/CaptureOutput.pm in @INC", 
+then install this module.  
+
+Use cpan
+--------
+Issue these commands at the system prompt:
+
+sudo cpan 
+install IO::CaptureOutput
+
+When you see "make install  -- OK", type "quit".
+
+Use supplied IO-CaptureOutput-1.1102.tar.gz
+-------------------------------------------
+At the unix/linux command line issue the following commands:
+
+tar zxf IO-CaptureOutput-1.1102.tar.gz
+IO-CaptureOutput-1.1102
+perl Makefile.PL
+make
+make test
+sudo make install
+
+The installation requires "sudo" access; you must be listed in /etc/sudoers, 
+and you will be required to supply your system password.  Otherwise, ask 
+your systems administrator to install this module for you.  
+
+
+Command invocation
+------------------
+
+Run grepsearch with the following shell script:
+
+sh grepsearch.sh <list of files> <search string list> <output filename>
+      <output dir> <script dir> <debug(1)>
+
+If no arguments are supplied the command syntax above will be displayed.
+Debug ("1") will list the command arguments.  
+
+The grepsearch.sh script executes a perl script, zgrepsrch.pl, that searches
+individual input files against the probes listed in the search string list. 
+
+The syntax (displayed when no arguments are supplied) is:
+
+zgrepsrch.pl -i [input list of fastq files] -p [oligo data] -o [output file]
+        -n [no complement] -w [working directory]
+
+Ordinarily, this script is executed inside of a "for" loop in the grepsearch.sh script.
+

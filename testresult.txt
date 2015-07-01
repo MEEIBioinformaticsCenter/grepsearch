@@ -1,0 +1,7 @@
+testA file: 14 mutant (secondary match: 14 match, 0 don't match),zero wt
+testB file: 13 mutant (secondary match: 12 match, 1 does not match), 23 wt
+
+data file	mutant	ref mat	no mat	wt
+testA 		14	14	3	0
+testB 		13	12	1	23		
+
