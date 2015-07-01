@@ -1,3 +1,9 @@
+###############################################################
+# grepsearch.sh		wrapper shell script for zgrepsrch.pl
+#
+# J.White	2015-04-03	v.1.0
+###############################################################
+
 # list of tar files to search
 list=$1
 # search strings formated: str1 \| str2	name
