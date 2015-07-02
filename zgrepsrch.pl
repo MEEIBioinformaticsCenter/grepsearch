@@ -159,13 +159,13 @@ while(<REGEX>) {
 	if($results[1] > 0) {
 		$hetratio = $results[1] / ($results[1] + $results[5]);
 		if($hetratio == 1) {
-			$call = "mak_alu_homozygous_mutant";
+			$call = "homozygous_mutant";
 		} elsif($hetratio >= 0.8) {
-			$call = "mak_alu_probable_homozygous_mutant_error";
+			$call = "probable_homozygous_mutant_error";
 		} elsif($hetratio >= 0.2) {
-			$call = "mak_alu_heterozygous_mutant";
+			$call = "heterozygous_mutant";
 		} else {
-			$call = "mak_alu_probable_heterozygous_mutant_error";
+			$call = "probable_heterozygous_mutant_error";
 		}
 	} else {
 		if($results[0] > 0) {
