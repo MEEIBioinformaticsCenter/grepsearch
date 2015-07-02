@@ -62,9 +62,9 @@ Test file results
 To run grepsearch with the test files, cd to the script directory 
 and then run the following commands:
 
-mkdir test
-cp test* test	#ignore the warning
-cd test
+mkdir greptest
+cp test* greptest
+cd greptest
 ../grepsearch.sh testlist ../mak_probe.txt out.test
 
 Results will be printed on screen and can be found in the file 'out.test'.  

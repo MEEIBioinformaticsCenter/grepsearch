@@ -51,3 +51,24 @@ zgrepsrch.pl -i [input list of fastq files] -p [oligo data] -o [output file]
 
 Ordinarily, this script is executed inside of a "for" loop in the grepsearch.sh script.
 
+
+Test file results
+-----------------
+
+To run grepsearch with the test files, cd to the script directory
+and then run the following commands:
+
+mkdir greptest
+cp test* greptest
+cd greptest
+../grepsearch.sh testlist ../mak_probe.txt out.test
+
+Results will be printed on screen and can be found in the file 'out.test'.
+
+testA file: 14 mutant (secondary match: 14 match, 0 don't match),zero wt
+testB file: 13 mutant (secondary match: 12 match, 1 does not match), 23 wt
+
+data file	mutant	ref mat	no mat	wt
+testA 		14	14	3	0
+testB 		13	12	1	23		
+
