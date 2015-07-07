@@ -3,7 +3,7 @@
 #
 #	zgrepsrch.pl	zgrep search a list of patterns against a fastq.gz file
 #
-#	J.White, J.Comander	2015-06-03	v.5
+#	J.White, J.Comander	2015-06-03	v.6
 #
 #############################################################################
 # Copyright (C) 2015  Joseph A.White and Jason Comander                     #
@@ -29,7 +29,8 @@ use IO::CaptureOutput qw/capture qxx qxy/;
 use File::Basename;
 
 my @args = @ARGV;
-my $usage = "perl $0 -i input -o output -p patterns_file -n(no rev_comp) -D(debug)";
+my $usage = "perl $0 -i input -o output -p patterns_file "
+	. "\n\t[-n(no rev_comp)] [-w working_directory] [-D(debug)]";
 die "$usage\n" if(@ARGV < 1);
 
 my %opts;
