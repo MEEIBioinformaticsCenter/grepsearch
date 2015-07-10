@@ -3,7 +3,7 @@
 #
 #	zgrepsrch.pl	zgrep search a list of patterns against a fastq.gz file
 #
-#	J.White, J.Comander	2015-06-03	v.6
+#	J.White, J.Comander	2015-06-03	v.8
 #
 #############################################################################
 # Copyright (C) 2015  Joseph A.White and Jason Comander                     #
