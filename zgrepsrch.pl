@@ -29,38 +29,51 @@ use IO::CaptureOutput qw/capture qxx qxy/;
 use File::Basename;
 
 my @args = @ARGV;
-my $usage = "perl $0 -i input -o output -p patterns_file "
+my $usage = "perl $0 -i input -o output -p patterns_file [-r resourcedir]"
 	. "\n\t[-n(no rev_comp)] [-w working_directory] [-D(debug)]";
 die "$usage\n" if(@ARGV < 1);
 
 my %opts;
-getopts("Dni:o:p:w:",\%opts);
+getopts("Dni:o:p:w:r:",\%opts);
 my $infile = $opts{'i'};
 my $output = $opts{'o'};
 my $patterns = $opts{'p'};
 my $debug = $opts{'D'};
 my $nocomp = $opts{'n'};
 my $workdir = $opts{'w'};
+my $resourcedir = $opts{'r'};
+my $log = "$output.log";
 
 die "No search patterns supplied" if ! $patterns; 
-my $probedir = dirname($patterns);
-chomp($probedir);
+if(! $resourcedir) {
+	my $probedir = dirname($patterns);
+	chomp($probedir);
+	$resourcedir = $probedir;
+	my $patterns1 = basename($patterns);
+	$patterns = $patterns1;
+}
 
 if($debug) {
 	print "infile: $infile\noutput file: $output\nprobes: $patterns\n";
-	print "nocomp: $nocomp\nworkdir: $workdir\nprobe dir: $probedir\n";
+	print "nocomp: $nocomp\nworkdir: $workdir\nprobe dir: $resourcedir\n";
 }
 
 if($output && $workdir) {
 	open(OUT,">>$workdir/$output") || die "Could not open output file, $output; $!\n";
+	open(LOG,">>$workdir/$output.log") || die "Could not open output file, $output.log; $!\n";
 	print OUT "perl $0 @args\n";
+	print LOG "perl $0 @args\n";
 } elsif($output) {
 	open(OUT,">>$output") || die "Could not open output file, $output; $!\n";
+	open(LOG,">>$output.log") || die "Could not open output file, $output.log; $!\n";
 	print OUT "perl $0 @args\n";
+	print LOG "perl $0 @args\n";
 }
+#print OUT "chr\tpos\tref\talt\ttype\tdepth\tvariants\tlabel\talt hits\talt ref\twt hits\twt ref\tallelic desc\tinput file\n";
+print OUT "label\tmut hit\tmut ref\twt hit\twt ref\tallelic desc\tinput file\n";
 
 my $ctr;
-open(REGEX, $patterns) || die "FILE $patterns NOT FOUND - $!\n";
+open(REGEX, "$resourcedir/$patterns") || die "FILE $patterns NOT FOUND - $!\n";
 while(<REGEX>) {
 	chomp;
 	$ctr++;
@@ -74,8 +87,8 @@ while(<REGEX>) {
 	# check for inserted mutant sequence file
 	if($ref_mut) {
 		$refsrch = 1;
-		$ref_mut = "$probedir/$ref_mut";
-		print "$ref_mut\n" if $debug;
+		$ref_mut = "$resourcedir/$ref_mut";
+		print LOG "$ref_mut\n" if $debug;
 		open(MUT,$ref_mut) || die "Could not open mutant reference file.\n";
 		# if this is a fasta file, skip the first line
 		if(index($ref_mut,".fasta") || index($ref_mut,".fa")) {
@@ -92,8 +105,8 @@ while(<REGEX>) {
 	# check for reference sequence file
 	if($ref_wt) {
 		$wtsrch = 1;
-		$ref_wt = "$probedir/$ref_wt";
-		print "$ref_wt\n" if $debug;
+		$ref_wt = "$resourcedir/$ref_wt";
+		print LOG "$ref_wt\n" if $debug;
 		open(WT,$ref_wt) || die "Could not open wildtype reference file.\n";
 		# if this is a fasta file, skip the first line
 		if(index($ref_wt,".fasta") || index($ref_wt,".fa")) {
@@ -121,84 +134,112 @@ while(<REGEX>) {
 	foreach my $reg (sort keys %regexp) {
 		# main loop
 		next if $reg eq 'label';
+		next if $reg eq '';
 		my $mutctr = 0; my $wtctr = 0;
 		my $regexp = $regexp{$reg};
 		my $label = $regexp{'label'} . "_$reg";
-		next if $reg eq '';
-		my $cmd = "zgrep '$regexp' $infile";
-		print "processing zgrep $label $regexp $infile \n";
+		my $cmd = "zgrep --no-filename '$regexp' $infile";
+		print LOG "$cmd\n" if $debug;
 		# capture stdout
 		my $stdout = qxx( $cmd );
 		chomp($stdout);
 		my @zhits = split /\W+/, $stdout;
 		if($debug) {
 			$" = "\n";
-			print "@zhits\n";
+			print LOG "@zhits\n";
 		}
 		# mutant hits
 		my $hitctr = scalar @zhits;
-		print "total hits hitctr $hitctr\n";
+		print LOG "total hits hitctr $hitctr\n";
 		push @results, $hitctr;
 
-		if($refsrch) {
+		if($reg eq 'mut') {
+			if($refsrch > 0) {
 		# secondary search against mutant reference
-			foreach my $hit (@zhits) {
-				my $rev_hit = &revcomp($hit);
-				my $pattern = ($hit . "\\\|$rev_hit");
-				my $cmd = "grep -c \"$pattern\" $ref_mut";
-				print OUT "mut ref hits: $cmd\n" if $debug;
-				my $stdout = qxx( $cmd );
-				chomp($stdout);
-				print "$stdout\n" if $debug;
-				$mutctr++ if $stdout > 0;
+				foreach my $hit (@zhits) {
+					my $rev_hit = &revcomp($hit);
+					my $pattern = ($hit . "\\\|$rev_hit");
+					my $cmd = "grep -c \"$pattern\" $ref_mut";
+					print LOG "mut ref hits: $cmd\n" if $debug;
+					my $stdout = qxx( $cmd );
+					chomp($stdout);
+					print "$stdout\n" if $debug;
+					$mutctr++ if $stdout > 0;
+				}
+				print "$mutctr\n" if $debug;
+				print LOG "matching mutant reference $mutctr\n" if $debug;
+			} else {
+				$mutctr = 'NA';
 			}
-			print "$mutctr\n" if $debug;
-			print "matching mutant reference $mutctr\n";
+			push @results, $mutctr;
 		}
-		push @results, $mutctr;
-		if($wtsrch) {
+		if($reg eq 'wt') {
+			if($wtsrch > 0) {
 		# secondary search against wt reference
-                        foreach my $hit (@zhits) {
-                                my $rev_hit = &revcomp($hit);
-                                my $pattern = ($hit . "\\\|$rev_hit");
-                                my $cmd = "grep -c \"$pattern\" $ref_wt";
-				print OUT "wt ref hits: $cmd\n" if $debug;
-                                my $stdout = qxx( $cmd );
-                                chomp($stdout);
-                                $wtctr++ if $stdout > 0;
-                        }
-			print "$wtctr\n" if $debug;
-			print "matching wt reference $wtctr\n";
+	                        foreach my $hit (@zhits) {
+        	                        my $rev_hit = &revcomp($hit);
+                	                my $pattern = ($hit . "\\\|$rev_hit");
+                        	        my $cmd = "grep -c \"$pattern\" $ref_wt";
+					print LOG "wt ref hits: $cmd\n" if $debug;
+	                                my $stdout = qxx( $cmd );
+        	                        chomp($stdout);
+                	                $wtctr++ if $stdout > 0;
+                        	}
+				print "$wtctr\n" if $debug;
+				print LOG "matching wt reference $wtctr\n";
+			} else {
+				$wtctr = 'NA';
+			}
+			push @results, $wtctr;
 		}
-		push @results, $wtctr;
+	}
+	my $varcnt = 0;
+	my $refcnt = 0;
+	if($ref_mut ne '') {
+		$varcnt = $results[1];
+	} else {
+		$varcnt = $results[0];
+	}
+	if($ref_wt ne '') {
+		$refcnt = $results[3];
+	} else {
+		$refcnt = $results[2];
 	}
 	$" = "\t";
 	# determine heterozygous/homozygous status at mutant site
 	my $hetratio;
 	my $call;
-	if($results[1] > 0) {
-		$hetratio = $results[1] / ($results[1] + $results[5]);
+	my $hettype;
+	if($varcnt > 0) {
+		$hetratio = $varcnt / ($varcnt + $refcnt);
 		if($hetratio == 1) {
 			$call = "homozygous_mutant";
+			$hettype = 'hom';
 		} elsif($hetratio >= 0.8) {
 			$call = "probable_homozygous_mutant_error";
+			$hettype = 'hom_error';
 		} elsif($hetratio >= 0.2) {
 			$call = "heterozygous_mutant";
+			$hettype = 'het';
 		} else {
 			$call = "probable_heterozygous_mutant_error";
+			$hettype = 'het_error';
 		}
+	} elsif($refcnt > 0) {
+		$call = "probable_wildtype";
+		$hettype = 'none';      # wildtype
 	} else {
-		if($results[0] > 0) {
-			$call = "probable_wildtype";
-		} else {
-			$call = "wildtype or no coverage";
-		}
+		$call = "wildtype or no coverage";
+		$hettype = 'none';      # no hits; no coverage
 	}
-	print OUT "@results\t$label\t$call\t$infile\n";
+	my $depth = $varcnt + $refcnt;
+#	my $alt = "+ALU $call (mut $results[0] $results[1] wt $results[2] $results[3])";
+	print OUT "$label\t@results\t$call\t$infile\n";
 	@results = ();
 }
 
 close(OUT);
+close(LOG);
 close(REGEX);
 
 # reverse complement sequence
@@ -217,3 +258,5 @@ sub revcomp {
 	if(length($seq) != length($rc)) { $rc = -1; }
 	return $rc;
 }
+
+__DATA__
