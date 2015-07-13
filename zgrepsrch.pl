@@ -3,7 +3,7 @@
 #
 #	zgrepsrch.pl	zgrep search a list of patterns against a fastq.gz file
 #
-#	J.White, J.Comander	2015-06-03	v.8
+#	J.White, J.Comander	2015-07-13	v.8.1
 #
 #############################################################################
 # Copyright (C) 2015  Joseph A.White and Jason Comander                     #
@@ -43,6 +43,7 @@ my $nocomp = $opts{'n'};
 my $workdir = $opts{'w'};
 my $resourcedir = $opts{'r'};
 my $log = "$output.log";
+my $varcutoff = 5; #used for determining call
 
 die "No search patterns supplied" if ! $patterns; 
 if(! $resourcedir) {
@@ -61,16 +62,16 @@ if($debug) {
 if($output && $workdir) {
 	open(OUT,">>$workdir/$output") || die "Could not open output file, $output; $!\n";
 	open(LOG,">>$workdir/$output.log") || die "Could not open output file, $output.log; $!\n";
-	print OUT "perl $0 @args\n";
+#	print OUT "perl $0 @args\n";
 	print LOG "perl $0 @args\n";
 } elsif($output) {
 	open(OUT,">>$output") || die "Could not open output file, $output; $!\n";
 	open(LOG,">>$output.log") || die "Could not open output file, $output.log; $!\n";
-	print OUT "perl $0 @args\n";
+#	print OUT "perl $0 @args\n";
 	print LOG "perl $0 @args\n";
 }
 #print OUT "chr\tpos\tref\talt\ttype\tdepth\tvariants\tlabel\talt hits\talt ref\twt hits\twt ref\tallelic desc\tinput file\n";
-print OUT "label\tmut hit\tmut ref\twt hit\twt ref\tallelic desc\tinput file\n";
+print OUT "label\tmut hit\tmut ref\twt hit\twt ref\tallelic desc\tzygosity\tinput file\n";
 
 my $ctr;
 open(REGEX, "$resourcedir/$patterns") || die "FILE $patterns NOT FOUND - $!\n";
@@ -225,16 +226,40 @@ while(<REGEX>) {
 			$call = "probable_heterozygous_mutant_error";
 			$hettype = 'het_error';
 		}
+	} else { 
+		#if there is no mutant reference - expecting some false positive hits
+		if ($varcnt > $varcutoff) { 
+			#more than varcutoff mutants = more reliable 
+			if($hetratio == 1) {
+				$call = "homozygous_mutant";
+				$hettype = 'hom';
+			} elsif($hetratio >= 0.8) {
+				$call = "probable_homozygous_mutant_error";
+				$hettype = 'hom_error';
+			} elsif($hetratio >= 0.2) {
+				$call = "heterozygous_mutant";
+				$hettype = 'het';
+			} else {
+				# different than above block
+				$call = "probable_false_positive_error"; 
+				#different than above block
+				$hettype = 'none'; 
+			}
+		} else { 
+			#less than varcutoff mutants
+			$call = "probable_false_positive_error";
+			$hettype = 'none';
+		}
 	} elsif($refcnt > 0) {
-		$call = "probable_wildtype";
+		$call = "wildtype";
 		$hettype = 'none';      # wildtype
 	} else {
-		$call = "wildtype or no coverage";
+		$call = "no coverage or no match";
 		$hettype = 'none';      # no hits; no coverage
 	}
 	my $depth = $varcnt + $refcnt;
 #	my $alt = "+ALU $call (mut $results[0] $results[1] wt $results[2] $results[3])";
-	print OUT "$label\t@results\t$call\t$infile\n";
+	print OUT "$label\t@results\t$call\t$hettype\t$infile\n";
 	@results = ();
 }
 
