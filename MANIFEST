@@ -6,12 +6,11 @@ grepsearch.sh			Main grepsearch script
 INSTALL				installation instructions
 IO-CaptureOutput-1.1102.tar.gz	Perl module required by zgrepsrch.pl
 makmutrefseq.fa			MAK1 mutant reference sequence, fasta format
-makmutrefseq.txt		MAK1 mutant reference sequence
 mak_probe.txt			MAK1 oligo sequences
 makwtrefseq.fa			MAK1 wildtype reference sequence, fasta format
-makwtrefseq.txt			MAK1 wildtype reference sequence
 MANIFEST			this file
-README.md			Program description
+README				Program description; validation instructions
+README.md			Program description for git
 testA.gz			test file A
 testB.gz			test file B
 testlist			list of test files
