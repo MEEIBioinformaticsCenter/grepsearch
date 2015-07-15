@@ -3,7 +3,7 @@
 #
 #	zgrepsrch.pl	zgrep search a list of patterns against a fastq.gz file
 #
-#	J.White, J.Comander	2015-07-13	v.8.1
+#	J.White, J.Comander	2015-07-15	v.8.2
 #
 #############################################################################
 # Copyright (C) 2015  Joseph A.White and Jason Comander                     #
@@ -43,7 +43,7 @@ my $nocomp = $opts{'n'};
 my $workdir = $opts{'w'};
 my $resourcedir = $opts{'r'};
 my $log = "$output.log";
-my $varcutoff = 5; #used for determining call
+my $varcutoff = 2; #used for determining call
 
 die "No search patterns supplied" if ! $patterns; 
 if(! $resourcedir) {
@@ -70,7 +70,6 @@ if($output && $workdir) {
 #	print OUT "perl $0 @args\n";
 	print LOG "perl $0 @args\n";
 }
-#print OUT "chr\tpos\tref\talt\ttype\tdepth\tvariants\tlabel\talt hits\talt ref\twt hits\twt ref\tallelic desc\tinput file\n";
 print OUT "label\tmut hit\tmut ref\twt hit\twt ref\tallelic desc\tzygosity\tinput file\n";
 
 my $ctr;
@@ -156,7 +155,7 @@ while(<REGEX>) {
 
 		if($reg eq 'mut') {
 			if($refsrch > 0) {
-		# secondary search against mutant reference
+				# secondary search against mutant reference
 				foreach my $hit (@zhits) {
 					my $rev_hit = &revcomp($hit);
 					my $pattern = ($hit . "\\\|$rev_hit");
@@ -176,7 +175,7 @@ while(<REGEX>) {
 		}
 		if($reg eq 'wt') {
 			if($wtsrch > 0) {
-		# secondary search against wt reference
+				# secondary search against wt reference
 	                        foreach my $hit (@zhits) {
         	                        my $rev_hit = &revcomp($hit);
                 	                my $pattern = ($hit . "\\\|$rev_hit");
@@ -213,23 +212,8 @@ while(<REGEX>) {
 	my $hettype;
 	if($varcnt > 0) {
 		$hetratio = $varcnt / ($varcnt + $refcnt);
-		if($hetratio == 1) {
-			$call = "homozygous_mutant";
-			$hettype = 'hom';
-		} elsif($hetratio >= 0.8) {
-			$call = "probable_homozygous_mutant_error";
-			$hettype = 'hom_error';
-		} elsif($hetratio >= 0.2) {
-			$call = "heterozygous_mutant";
-			$hettype = 'het';
-		} else {
-			$call = "probable_heterozygous_mutant_error";
-			$hettype = 'het_error';
-		}
-	} else { 
-		#if there is no mutant reference - expecting some false positive hits
-		if ($varcnt > $varcutoff) { 
-			#more than varcutoff mutants = more reliable 
+		if($ref_mut ne '') { 
+			#if we are using a reference sequence for mutant
 			if($hetratio == 1) {
 				$call = "homozygous_mutant";
 				$hettype = 'hom';
@@ -240,15 +224,33 @@ while(<REGEX>) {
 				$call = "heterozygous_mutant";
 				$hettype = 'het';
 			} else {
-				# different than above block
-				$call = "probable_false_positive_error"; 
-				#different than above block
-				$hettype = 'none'; 
+				$call = "probable_heterozygous_mutant_error";
+				$hettype = 'het_error';
 			}
 		} else { 
-			#less than varcutoff mutants
-			$call = "probable_false_positive_error";
-			$hettype = 'none';
+			#if there is no mutant reference - expecting some false positive hits
+			if ($varcnt > $varcutoff) { 
+				#more than varcutoff mutants = more reliable 
+				if($hetratio == 1) {
+					$call = "homozygous_mutant";
+					$hettype = 'hom';
+				} elsif($hetratio >= 0.8) {
+					$call = "probable_homozygous_mutant_error";
+					$hettype = 'hom_error';
+				} elsif($hetratio >= 0.2) {
+					$call = "heterozygous_mutant";
+					$hettype = 'het';
+				} else {
+					# different than above block
+					$call = "probable_false_positive_error"; 
+					#different than above block
+					$hettype = 'none'; 
+				}
+			} else { 
+				#less than varcutoff mutants
+				$call = "probable_false_positive_error";
+				$hettype = 'none';
+			}
 		}
 	} elsif($refcnt > 0) {
 		$call = "wildtype";
